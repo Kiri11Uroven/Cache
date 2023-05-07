@@ -1,6 +1,5 @@
 package com.myIdeas;
 
-
 import java.util.*;
 
 public class Cache {
@@ -15,14 +14,14 @@ public class Cache {
     public static void addUser(User user) {
         if (isValidToAdd(user)) {
             users.add(user);
-            List<Integer> addingNameIndices = new ArrayList<>();
-            List<Integer> addingValueIndices = new ArrayList<>();
+            List<Integer> addedNameIndices = new ArrayList<>();
+            List<Integer> addedValueIndices = new ArrayList<>();
             int index = users.indexOf(user);
-            addingNameIndices.add(index);
-            addingValueIndices.add(index);
+            addedNameIndices.add(index);
+            addedValueIndices.add(index);
             accountIndices.put(user.getAccount(), index);
-            addNameIndex(user, addingNameIndices);
-            addValueIndex(user, addingValueIndices);
+            addNameIndex(user, addedNameIndices);
+            addValueIndex(user, addedValueIndices);
         }
     }
 
@@ -48,8 +47,8 @@ public class Cache {
     }
 
     public static void removeUser(User user) {
-        int i = users.indexOf(user);
         if (isValidToRemove(user)) {
+            int i = users.indexOf(user);
             removeNameIndex(user, i);
             removeValueIndex(user, i);
             users.remove(user);
@@ -122,7 +121,10 @@ public class Cache {
         }
     }
 
-    private static boolean isValidToAdd(User user) {// проверить наличие юзера с таким номером аккаунта?
+    private static boolean isValidToAdd(User user) {
+        if (accountIndices.containsKey(user.getAccount())) {
+            throw new IllegalArgumentException("Пользователя с таким номером аккаунта уже существует");
+        }
         if (user.getName() == null || user.getName().equals("")) {
             throw new IllegalArgumentException("Имя не может быть пустым");
         }
