@@ -49,8 +49,8 @@ public class Cache {
     public static void removeUser(User user) {
         if (isValidToRemove(user)) {
             int i = users.indexOf(user);
-            removeNameIndex(user, i);
-            removeValueIndex(user, i);
+            removeNameIndexes(user.getName(), i);
+            removeValueIndexes(user.getValue(), i);
             users.remove(user);
             accountIndices.remove(user.getAccount());
             updateAccountIndices(i);
@@ -69,19 +69,6 @@ public class Cache {
         addUser(newUser);
     }
 
-    private static void updateNameIndices(int index) {
-        List<Integer> list;
-        Set<String> names = new HashSet<>(nameIndices.keySet());
-        for (String name : names) {
-            list = nameIndices.get(name);
-            for (int j = 0; j < list.size(); j++) {
-                if (list.get(j) > index) {
-                    list.set(j, list.get(j) - 1);
-                }
-            }
-        }
-    }
-
     private static void updateAccountIndices(int index) {
         for (User user : users) {
             if (accountIndices.get(user.getAccount()) > index) {
@@ -90,34 +77,31 @@ public class Cache {
         }
     }
 
-    private static void updateValueIndices(int index) {
-        List<Integer> list;
-        Set<Double> values = new HashSet<>(valueIndices.keySet());
-        for (Double value : values) {
-            list = valueIndices.get(value);
-            for (int j = 0; j < list.size(); j++) {
-                if (list.get(j) > index) {
-                    list.set(j, list.get(j) - 1);
-                }
+
+    private static void removeNameIndexes(String user, int y) {
+        Iterator<Map.Entry<String, List<Integer>>> iterator = nameIndices.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, List<Integer>> entry = iterator.next();
+            String name = entry.getKey();
+            List<Integer> indexes = entry.getValue();
+            if (user.equals(name) && indexes.remove((Integer) y) && indexes.isEmpty()) {
+                iterator.remove();
             }
+            indexes.replaceAll(currentIndex -> currentIndex > y ? currentIndex - 1 : currentIndex);
         }
     }
 
-    private static void removeNameIndex(User user, int y) {
-        List<Integer> list = nameIndices.get(user.getName());
-        list.remove((Integer) y);
-        updateNameIndices(y);
-        if (list.size() == 0) {
-            nameIndices.remove(user.getName(), list);
-        }
-    }
 
-    private static void removeValueIndex(User user, int y) {
-        List<Integer> list = valueIndices.get(user.getValue());
-        list.remove((Integer) y);
-        updateValueIndices(y);
-        if (list.size() == 0) {
-            valueIndices.remove(user.getValue(), list);
+    private static void removeValueIndexes(double value, int y) {
+        Iterator<Map.Entry<Double, List<Integer>>> iterator = valueIndices.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Double, List<Integer>> entry = iterator.next();
+            Double val = entry.getKey();
+            List<Integer> indexes = entry.getValue();
+            if (value == val && indexes.remove((Integer) y) && indexes.isEmpty()) {
+                iterator.remove();
+            }
+            indexes.replaceAll(currentIndex -> currentIndex > y ? currentIndex - 1 : currentIndex);
         }
     }
 
@@ -168,7 +152,6 @@ public class Cache {
             valueIndices.put(user.getValue(), newUserIndices);
         }
     }
-
 }
 
 
