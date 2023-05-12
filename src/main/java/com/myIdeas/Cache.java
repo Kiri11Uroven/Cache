@@ -12,60 +12,72 @@ public class Cache {
     }
 
     public static void addUser(User user) {
-        if (isValidToAdd(user)) {
-            users.add(user);
-            List<Integer> addedNameIndices = new ArrayList<>();
-            List<Integer> addedValueIndices = new ArrayList<>();
-            int index = users.indexOf(user);
-            addedNameIndices.add(index);
-            addedValueIndices.add(index);
-            accountIndices.put(user.getAccount(), index);
-            addNameIndex(user, addedNameIndices);
-            addValueIndex(user, addedValueIndices);
-        }
+        addedUserValidator(user);
+        users.add(user);
+        List<Integer> addedNameIndices = new ArrayList<>();
+        List<Integer> addedValueIndices = new ArrayList<>();
+        int index = users.indexOf(user);
+        addedNameIndices.add(index);
+        addedValueIndices.add(index);
+        accountIndices.put(user.getAccount(), index);
+        addNameIndex(user, addedNameIndices);
+        addValueIndex(user, addedValueIndices);
     }
 
-    public static List<Integer> findIndicesByName(String name) {
+    public static List<User> findUsersByName(String name) {
         if (name == null || name.equals("")) {
             throw new IllegalArgumentException("Имя не может быть пустым");
         }
-        return new ArrayList<>(nameIndices.get(name));
+        List<User> usersByName = new ArrayList<>();
+        for (Integer index : nameIndices.get(name)) {
+            usersByName.add(users.get(index));
+        }
+        return usersByName;
     }
 
-    public static User findByAccount(Long account) {
+    public static User findUserByAccount(Long account) {
         if (account == null || account < 0) {
             throw new IllegalArgumentException("Номер аккаунта не может быть меньше нуля");
         }
-        return users.get(accountIndices.get(account));
+        User tempUser = users.get(accountIndices.get(account));
+        return new User(tempUser.getAccount(), tempUser.getName(), tempUser.getValue());
     }
 
-    public static List<Integer> findIndicesByValue(Double value) {
+    public static List<User> findUsersByValue(Double value) {
         if (value == null || value < 0) {
             throw new IllegalArgumentException("Значение баланса не может быть меньше нуля");
         }
-        return new ArrayList<>(valueIndices.get(value));
-    }
-
-    public static void removeUser(User user) {
-        if (isValidToRemove(user)) {
-            int i = users.indexOf(user);
-            removeNameIndexes(user.getName(), i);
-            removeValueIndexes(user.getValue(), i);
-            users.remove(user);
-            accountIndices.remove(user.getAccount());
-            updateAccountIndices(i);
+        List<User> usersByValue = new ArrayList<>();
+        for (Integer index : valueIndices.get(value)) {
+            usersByValue.add(users.get(index));
         }
+        return usersByValue;
     }
 
-    public static void updateUser(User oldUser, String newName) {
-        User newUser = new User(oldUser.getAccount(), newName, oldUser.getValue());
-        removeUser(oldUser);
+    public static void removeUser(long account) {
+        User user = findUserByAccount(account);
+        removeUserValidator(user);
+        int index = users.indexOf(user);
+        removeNameIndexes(user.getName(), index);
+        removeValueIndexes(user.getValue(), index);
+        users.remove(user);
+        accountIndices.remove(user.getAccount());
+        updateAccountIndices(index);
+    }
+
+    public static void updateUserName(long account, String newName) {
+        User oldUser = findUserByAccount(account);
+        User newUser = new User();
+        newUser.setName(newName).setAccount(oldUser.getAccount()).setValue(oldUser.getValue()).build();
+        removeUser(account);
         addUser(newUser);
     }
 
-    public void updateUser(User oldUser, double newValue) {
-        User newUser = new User(oldUser.getAccount(), oldUser.getName(), newValue);
-        removeUser(oldUser);
+    public static void updateUserValue(long account, double newValue) {
+        User oldUser = findUserByAccount(account);
+        User newUser = new User();
+        newUser.setName(oldUser.getName()).setAccount(oldUser.getAccount()).setValue(newValue).build();
+        removeUser(account);
         addUser(newUser);
     }
 
@@ -77,35 +89,33 @@ public class Cache {
         }
     }
 
-
-    private static void removeNameIndexes(String user, int y) {
+    private static void removeNameIndexes(String name, int y) {
         Iterator<Map.Entry<String, List<Integer>>> iterator = nameIndices.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, List<Integer>> entry = iterator.next();
-            String name = entry.getKey();
+            String CheckingName = entry.getKey();
             List<Integer> indexes = entry.getValue();
-            if (user.equals(name) && indexes.remove((Integer) y) && indexes.isEmpty()) {
+            if (name.equals(CheckingName) && indexes.remove((Integer) y) && indexes.isEmpty()) {
                 iterator.remove();
             }
             indexes.replaceAll(currentIndex -> currentIndex > y ? currentIndex - 1 : currentIndex);
         }
     }
-
 
     private static void removeValueIndexes(double value, int y) {
         Iterator<Map.Entry<Double, List<Integer>>> iterator = valueIndices.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Double, List<Integer>> entry = iterator.next();
-            Double val = entry.getKey();
+            Double checkingValue = entry.getKey();
             List<Integer> indexes = entry.getValue();
-            if (value == val && indexes.remove((Integer) y) && indexes.isEmpty()) {
+            if (value == checkingValue && indexes.remove((Integer) y) && indexes.isEmpty()) {
                 iterator.remove();
             }
             indexes.replaceAll(currentIndex -> currentIndex > y ? currentIndex - 1 : currentIndex);
         }
     }
 
-    private static boolean isValidToAdd(User user) {
+    private static void addedUserValidator(User user) {
         if (accountIndices.containsKey(user.getAccount())) {
             throw new IllegalArgumentException("Пользователя с таким номером аккаунта уже существует");
         }
@@ -118,10 +128,9 @@ public class Cache {
         if (user.getValue() < 0) {
             throw new IllegalArgumentException("Значение баланса не может быть меньше нуля");
         }
-        return true;
     }
 
-    private static boolean isValidToRemove(User user) {
+    private static void removeUserValidator(User user) {
         if (!accountIndices.containsKey(user.getAccount())) {
             throw new IllegalArgumentException("Пользователя с таким номером аккаунта не существует");
         }
@@ -134,7 +143,6 @@ public class Cache {
         if (user.getValue() < 0) {
             throw new IllegalArgumentException("Значение баланса не может быть меньше нуля");
         }
-        return true;
     }
 
     private static void addNameIndex(User user, List<Integer> newUserIndices) {

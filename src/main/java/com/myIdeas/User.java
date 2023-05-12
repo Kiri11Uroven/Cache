@@ -2,7 +2,7 @@ package com.myIdeas;
 
 import java.util.Objects;
 
-class User {
+class User implements UserBuilder {
 
     private long account;
     private String name;
@@ -51,15 +51,24 @@ class User {
                 '}';
     }
 
-    public void setAccount(long account) {
+    public UserBuilder setAccount(long account) {
         this.account = account;
+        return this;
     }
 
-    public void setName(String name) {
+    public UserBuilder setName(String name) {
         this.name = name;
+        return this;
     }
 
-    public void setValue(double value) {
+    public UserBuilder setValue(double value) {
         this.value = value;
+        return this;
     }
+
+    @Override
+    public User build() {
+        return new User(account, name, value);
+    }
+
 }
